@@ -510,12 +510,7 @@ Return<bool> DacControl::setCustomFilterShape(int32_t shape) {
         return false;
     }
 
-    int rc;
-    if (shape <= 4)
-        rc = property_set(PROPERTY_CUSTOM_FILTER_SHAPE, std::to_string(shape).c_str());
-    else /* Filter 5 (counting from 0) is enumerated 6 on es9218.h, so anything after receives +1 as
-            well */
-        rc = property_set(PROPERTY_CUSTOM_FILTER_SHAPE, std::to_string(shape + 1).c_str());
+    int rc = property_set(PROPERTY_CUSTOM_FILTER_SHAPE, std::to_string(shape).c_str());
     if (rc) {
         LOG(ERROR) << "DacControl::setCustomFilterShape: failed to set property "
                    << PROPERTY_CUSTOM_FILTER_SHAPE << " with error " << rc;
