@@ -23,6 +23,7 @@ import android.content.IntentFilter
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +40,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -49,21 +52,26 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.outlined.Headphones
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -224,7 +232,7 @@ private fun QuadDACPanelList(state: QuadDACUiState, viewModel: QuadDACViewModel,
                 SettingsCard {
                     var needsDivider = false
                     if (state.hifiModeSupported) {
-                        DropdownSettingRow(
+                        SingleChoicePreferenceRow(
                             title = stringResource(R.string.hifi_mode),
                             options = entriesFor(Constants.HIFI_MODE_KEY),
                             selectedIndex = state.hifiMode,
@@ -240,7 +248,7 @@ private fun QuadDACPanelList(state: QuadDACUiState, viewModel: QuadDACViewModel,
                                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                             )
                         }
-                        DropdownSettingRow(
+                        SingleChoicePreferenceRow(
                             title = stringResource(R.string.sound_preset),
                             options = entriesFor(Constants.SOUND_PRESET_KEY),
                             selectedIndex = state.soundPreset,
@@ -256,7 +264,7 @@ private fun QuadDACPanelList(state: QuadDACUiState, viewModel: QuadDACViewModel,
                                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                             )
                         }
-                        DropdownSettingRow(
+                        SingleChoicePreferenceRow(
                             title = stringResource(R.string.digital_filter),
                             options = entriesFor(Constants.DIGITAL_FILTER_KEY),
                             selectedIndex = state.digitalFilter,
@@ -290,7 +298,7 @@ private fun QuadDACPanelList(state: QuadDACUiState, viewModel: QuadDACViewModel,
             }
             item(key = "custom_filter_card") {
                 SettingsCard {
-                    DropdownSettingRow(
+                    SingleChoicePreferenceRow(
                         title = stringResource(R.string.cf_shape),
                         options = entriesFor(Constants.CUSTOM_FILTER_SHAPE_KEY),
                         selectedIndex = state.customFilterShape,
@@ -301,7 +309,7 @@ private fun QuadDACPanelList(state: QuadDACUiState, viewModel: QuadDACViewModel,
                         modifier = Modifier.padding(horizontal = 16.dp),
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                     )
-                    DropdownSettingRow(
+                    SegmentedChoiceSettingRow(
                         title = stringResource(R.string.cf_symmetry),
                         options = entriesFor(Constants.CUSTOM_FILTER_SYMMETRY_KEY),
                         selectedIndex = state.customFilterSymmetry,
@@ -343,14 +351,20 @@ private fun QuadDACPanelList(state: QuadDACUiState, viewModel: QuadDACViewModel,
                 }
             }
             item(key = Constants.RESET_COEFFICIENTS_KEY) {
-                OutlinedButton(
+                FilledTonalButton(
                     onClick = viewModel::onResetCoefficients,
                     enabled = state.extraEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 12.dp),
-                    shape = MaterialTheme.shapes.full,
+                    shape = CircleShape,
                 ) {
+                    Icon(
+                        imageVector = Icons.Default.RestartAlt,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.cf_reset))
                 }
             }
@@ -362,11 +376,39 @@ private fun QuadDACPanelList(state: QuadDACUiState, viewModel: QuadDACViewModel,
             item(key = Constants.BALANCE_KEY) {
                 SettingsCard {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = stringResource(R.string.quad_dac_balance_summary),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(
+                                text = stringResource(R.string.quad_dac_balance_summary),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.weight(1f),
+                            )
+                            val isCentered = state.balanceLeft == 0 && state.balanceRight == 0
+                            if (!isCentered && state.extraEnabled) {
+                                TextButton(
+                                    onClick = {
+                                        if (state.balanceLeft != 0) {
+                                            viewModel.onBalanceAdjusted(BalanceSide.LEFT, -state.balanceLeft)
+                                        }
+                                        if (state.balanceRight != 0) {
+                                            viewModel.onBalanceAdjusted(BalanceSide.RIGHT, -state.balanceRight)
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.RestartAlt,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(stringResource(R.string.balance_center))
+                                }
+                            }
+                        }
                         Spacer(modifier = Modifier.height(16.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -618,33 +660,119 @@ private fun SettingRow(title: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun DropdownSettingRow(
+private fun SingleChoicePreferenceRow(
     title: String,
     options: List<String>,
     selectedIndex: Int,
     enabled: Boolean,
     onSelected: (Int) -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    val selectedLabel = options.getOrNull(selectedIndex) ?: options.firstOrNull() ?: title
+    var showDialog by remember { mutableStateOf(false) }
+    val selectedLabel = options.getOrNull(selectedIndex) ?: options.firstOrNull() ?: ""
 
-    SettingRow(title = title) {
-        // The DropdownMenu must share a Box with its trigger: the menu's Popup
-        // anchors to the nearest parent layout, which without the Box is the
-        // full-width SettingRow — popping the menu at the screen's left edge.
-        Box {
-            TextButton(onClick = { expanded = true }, enabled = enabled) {
-                Text(selectedLabel)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled) { showDialog = true }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+            )
+            if (selectedLabel.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = selectedLabel,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
+                )
             }
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                options.forEachIndexed { index, option ->
-                    DropdownMenuItem(
-                        text = { Text(option) },
-                        onClick = {
-                            expanded = false
-                            onSelected(index)
-                        },
-                    )
+        }
+    }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineSmall,
+                )
+            },
+            text = {
+                Column(modifier = Modifier.selectableGroup()) {
+                    options.forEachIndexed { index, option ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(MaterialTheme.shapes.small)
+                                .selectable(
+                                    selected = index == selectedIndex,
+                                    role = Role.RadioButton,
+                                    onClick = {
+                                        onSelected(index)
+                                        showDialog = false
+                                    },
+                                )
+                                .padding(vertical = 12.dp, horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(
+                                selected = index == selectedIndex,
+                                onClick = null,
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = option,
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text(stringResource(R.string.back))
+                }
+            },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SegmentedChoiceSettingRow(
+    title: String,
+    options: List<String>,
+    selectedIndex: Int,
+    enabled: Boolean,
+    onSelected: (Int) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            options.forEachIndexed { index, label ->
+                SegmentedButton(
+                    selected = index == selectedIndex,
+                    onClick = { onSelected(index) },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                    enabled = enabled,
+                ) {
+                    Text(text = label, maxLines = 1)
                 }
             }
         }
@@ -745,6 +873,7 @@ private fun CoefficientSettingRow(
                     }
                 },
                 modifier = Modifier.width(96.dp),
+                shape = MaterialTheme.shapes.small,
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyMedium,
                 keyboardOptions = KeyboardOptions(
@@ -782,9 +911,9 @@ private fun BalanceColumn(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(
+            FilledTonalIconButton(
                 onClick = { onAdjust(-1) },
                 enabled = enabled && value > range.first,
             ) {
@@ -792,11 +921,11 @@ private fun BalanceColumn(
             }
             Text(
                 text = stringResource(R.string.balance_value_db, value / 2.0),
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.width(64.dp),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.width(68.dp),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             )
-            IconButton(
+            FilledTonalIconButton(
                 onClick = { onAdjust(+1) },
                 enabled = enabled && value < range.last,
             ) {

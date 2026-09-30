@@ -67,6 +67,8 @@
 
     <string name="back">Back</string>
     <string name="headset_not_plugged_hint">Connect wired headphones to use Hi-Fi Quad DAC</string>
+    <string name="balance_center">Center</string>
+    <string name="balance_centered">Centered</string>
 
 </resources>
 
