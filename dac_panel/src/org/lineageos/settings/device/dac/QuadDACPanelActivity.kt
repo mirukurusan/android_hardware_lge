@@ -19,6 +19,7 @@ package org.lineageos.settings.device.dac
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 
 /**
  * Hosts the Compose QuadDAC panel. Keeps the EXTRA_SETTINGS / QS_TILE_PREFERENCES
@@ -29,6 +30,7 @@ import androidx.activity.compose.setContent
 class QuadDACPanelActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         val searchKey = intent.getStringExtra(EXTRA_FRAGMENT_ARG_KEY)
