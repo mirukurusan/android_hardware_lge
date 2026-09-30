@@ -27,6 +27,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -46,6 +47,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.Headphones
 import androidx.compose.material3.Card
@@ -54,6 +56,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
@@ -213,134 +216,190 @@ private fun QuadDACPanelList(state: QuadDACUiState, viewModel: QuadDACViewModel,
                 )
             }
         }
-        if (state.hifiModeSupported) {
-            item(key = Constants.HIFI_MODE_KEY) {
-                DropdownSettingRow(
-                    title = stringResource(R.string.hifi_mode),
-                    options = entriesFor(Constants.HIFI_MODE_KEY),
-                    selectedIndex = state.hifiMode,
-                    enabled = state.extraEnabled,
-                    onSelected = viewModel::onHifiModeSelected,
-                )
+        if (state.hifiModeSupported || state.soundPresetSupported || state.digitalFilterSupported || state.avcSupported) {
+            item(key = "section_audio_settings") {
+                SectionTitle(stringResource(R.string.quad_dac_settings))
             }
-        }
-        if (state.avcSupported) {
-            item(key = Constants.AVC_VOLUME_KEY) {
-                SliderSettingRow(
-                    title = stringResource(R.string.avc_volume),
-                    valueText = stringResource(R.string.avc_value_db, state.avcVolume),
-                    value = state.avcVolume.toFloat(),
-                    range = state.avcVolumeRange.first.toFloat()..state.avcVolumeRange.last.toFloat(),
-                    enabled = state.extraEnabled,
-                    onValueChange = viewModel::onAvcVolumeChanged,
-                )
-            }
-        }
-        if (state.soundPresetSupported) {
-            item(key = Constants.SOUND_PRESET_KEY) {
-                DropdownSettingRow(
-                    title = stringResource(R.string.sound_preset),
-                    options = entriesFor(Constants.SOUND_PRESET_KEY),
-                    selectedIndex = state.soundPreset,
-                    enabled = state.extraEnabled,
-                    onSelected = viewModel::onSoundPresetSelected,
-                )
-            }
-        }
-        if (state.digitalFilterSupported) {
-            item(key = Constants.DIGITAL_FILTER_KEY) {
-                DropdownSettingRow(
-                    title = stringResource(R.string.digital_filter),
-                    options = entriesFor(Constants.DIGITAL_FILTER_KEY),
-                    selectedIndex = state.digitalFilter,
-                    enabled = state.extraEnabled,
-                    onSelected = viewModel::onDigitalFilterSelected,
-                )
+            item(key = "audio_settings_card") {
+                SettingsCard {
+                    var needsDivider = false
+                    if (state.hifiModeSupported) {
+                        DropdownSettingRow(
+                            title = stringResource(R.string.hifi_mode),
+                            options = entriesFor(Constants.HIFI_MODE_KEY),
+                            selectedIndex = state.hifiMode,
+                            enabled = state.extraEnabled,
+                            onSelected = viewModel::onHifiModeSelected,
+                        )
+                        needsDivider = true
+                    }
+                    if (state.soundPresetSupported) {
+                        if (needsDivider) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                            )
+                        }
+                        DropdownSettingRow(
+                            title = stringResource(R.string.sound_preset),
+                            options = entriesFor(Constants.SOUND_PRESET_KEY),
+                            selectedIndex = state.soundPreset,
+                            enabled = state.extraEnabled,
+                            onSelected = viewModel::onSoundPresetSelected,
+                        )
+                        needsDivider = true
+                    }
+                    if (state.digitalFilterSupported) {
+                        if (needsDivider) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                            )
+                        }
+                        DropdownSettingRow(
+                            title = stringResource(R.string.digital_filter),
+                            options = entriesFor(Constants.DIGITAL_FILTER_KEY),
+                            selectedIndex = state.digitalFilter,
+                            enabled = state.extraEnabled,
+                            onSelected = viewModel::onDigitalFilterSelected,
+                        )
+                        needsDivider = true
+                    }
+                    if (state.avcSupported) {
+                        if (needsDivider) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                            )
+                        }
+                        SliderSettingRow(
+                            title = stringResource(R.string.avc_volume),
+                            valueText = stringResource(R.string.avc_value_db, state.avcVolume),
+                            value = state.avcVolume.toFloat(),
+                            range = state.avcVolumeRange.first.toFloat()..state.avcVolumeRange.last.toFloat(),
+                            enabled = state.extraEnabled,
+                            onValueChange = viewModel::onAvcVolumeChanged,
+                        )
+                    }
+                }
             }
         }
         if (state.customFilterVisible) {
-            item(key = "custom_filter_section") {
+            item(key = "section_custom_filter") {
                 SectionTitle(stringResource(R.string.customizable_filter_settings))
             }
-            item(key = Constants.CUSTOM_FILTER_SHAPE_KEY) {
-                DropdownSettingRow(
-                    title = stringResource(R.string.cf_shape),
-                    options = entriesFor(Constants.CUSTOM_FILTER_SHAPE_KEY),
-                    selectedIndex = state.customFilterShape,
-                    enabled = state.extraEnabled,
-                    onSelected = viewModel::onCustomFilterShapeSelected,
-                )
+            item(key = "custom_filter_card") {
+                SettingsCard {
+                    DropdownSettingRow(
+                        title = stringResource(R.string.cf_shape),
+                        options = entriesFor(Constants.CUSTOM_FILTER_SHAPE_KEY),
+                        selectedIndex = state.customFilterShape,
+                        enabled = state.extraEnabled,
+                        onSelected = viewModel::onCustomFilterShapeSelected,
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    )
+                    DropdownSettingRow(
+                        title = stringResource(R.string.cf_symmetry),
+                        options = entriesFor(Constants.CUSTOM_FILTER_SYMMETRY_KEY),
+                        selectedIndex = state.customFilterSymmetry,
+                        enabled = state.extraEnabled,
+                        onSelected = viewModel::onCustomFilterSymmetrySelected,
+                    )
+                }
             }
-            item(key = Constants.CUSTOM_FILTER_SYMMETRY_KEY) {
-                DropdownSettingRow(
-                    title = stringResource(R.string.cf_symmetry),
-                    options = entriesFor(Constants.CUSTOM_FILTER_SYMMETRY_KEY),
-                    selectedIndex = state.customFilterSymmetry,
-                    enabled = state.extraEnabled,
-                    onSelected = viewModel::onCustomFilterSymmetrySelected,
-                )
-            }
-            item(key = "coeff_section") {
+            item(key = "coeff_section_title") {
                 SectionTitle(stringResource(R.string.customizable_filter_coeffs))
-                Text(
-                    text = stringResource(R.string.customizable_filter_coeffs_summary),
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            }
+            item(key = "coeff_warning_banner") {
+                CoefficientsWarningBanner(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
                 )
             }
-            itemsIndexed(
-                state.coefficients,
-                key = { index, _ -> Constants.CUSTOM_FILTER_COEFF_KEYS[index] },
-            ) { index, value ->
-                // 0.xxxxx for positive, -0.xxxxx for negative (sign before the dot)
-                val coeffText = if (value < 0) "-0.${-value}" else "0.$value"
-                CoefficientSettingRow(
-                    title = stringResource(R.string.cf_coeff_label, index, coeffText),
-                    value = value,
-                    range = COEFF_RANGE_FIRST..COEFF_RANGE_LAST,
-                    enabled = state.extraEnabled,
-                    onValueChange = { newValue, commitNow ->
-                        viewModel.onCoefficientChanged(index, newValue, commitNow)
-                    },
-                )
+            item(key = "coeffs_card") {
+                SettingsCard {
+                    state.coefficients.forEachIndexed { index, value ->
+                        val coeffText = if (value < 0) "-0.${-value}" else "0.$value"
+                        if (index > 0) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                            )
+                        }
+                        CoefficientSettingRow(
+                            title = stringResource(R.string.cf_coeff_label, index, coeffText),
+                            value = value,
+                            range = COEFF_RANGE_FIRST..COEFF_RANGE_LAST,
+                            enabled = state.extraEnabled,
+                            onValueChange = { newValue, commitNow ->
+                                viewModel.onCoefficientChanged(index, newValue, commitNow)
+                            },
+                        )
+                    }
+                }
             }
             item(key = Constants.RESET_COEFFICIENTS_KEY) {
                 OutlinedButton(
                     onClick = viewModel::onResetCoefficients,
                     enabled = state.extraEnabled,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp,
-                        vertical = 8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    shape = MaterialTheme.shapes.full,
                 ) {
                     Text(stringResource(R.string.cf_reset))
                 }
             }
         }
         if (state.balanceSupported) {
-            item(key = Constants.BALANCE_KEY) {
+            item(key = "section_balance") {
                 SectionTitle(stringResource(R.string.quad_dac_balance))
-                Text(
-                    text = stringResource(R.string.quad_dac_balance_summary),
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                )
-                Row(modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly) {
-                    BalanceColumn(
-                        title = "L",
-                        value = state.balanceLeft,
-                        range = state.balanceRange,
-                        enabled = state.extraEnabled,
-                        onAdjust = { delta -> viewModel.onBalanceAdjusted(BalanceSide.LEFT, delta) },
-                    )
-                    BalanceColumn(
-                        title = "R",
-                        value = state.balanceRight,
-                        range = state.balanceRange,
-                        enabled = state.extraEnabled,
-                        onAdjust = { delta -> viewModel.onBalanceAdjusted(BalanceSide.RIGHT, delta) },
-                    )
+            }
+            item(key = Constants.BALANCE_KEY) {
+                SettingsCard {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = stringResource(R.string.quad_dac_balance_summary),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            BalanceColumn(
+                                title = "L",
+                                value = state.balanceLeft,
+                                range = state.balanceRange,
+                                enabled = state.extraEnabled,
+                                onAdjust = { delta -> viewModel.onBalanceAdjusted(BalanceSide.LEFT, delta) },
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .height(48.dp)
+                                    .width(1.dp)
+                                    .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                            )
+                            BalanceColumn(
+                                title = "R",
+                                value = state.balanceRight,
+                                range = state.balanceRange,
+                                enabled = state.extraEnabled,
+                                onAdjust = { delta -> viewModel.onBalanceAdjusted(BalanceSide.RIGHT, delta) },
+                            )
+                        }
+                    }
                 }
             }
+        }
+        item(key = "bottom_spacer") {
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
@@ -481,23 +540,79 @@ private fun HeadsetNotPluggedBanner(modifier: Modifier = Modifier) {
 }
 
 @Composable
+private fun SettingsCard(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+        content = content,
+    )
+}
+
+@Composable
+private fun CoefficientsWarningBanner(modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f),
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        ),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(24.dp),
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = stringResource(R.string.customizable_filter_coeffs_summary),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+            )
+        }
+    }
+}
+
+@Composable
 private fun SectionTitle(text: String) {
     Text(
         text = text,
-        style = MaterialTheme.typography.titleSmall,
+        style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp),
+        modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 6.dp),
     )
 }
 
 @Composable
 private fun SettingRow(title: String, content: @Composable () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = title, style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
         content()
     }
 }
@@ -547,14 +662,23 @@ private fun SliderSettingRow(
 ) {
     // onValueChangeFinished carries no value, so track the latest drag position here.
     var latestValue by remember { mutableStateOf(value) }
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.weight(1f))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
+            )
             if (valueText != null) {
-                Text(text = valueText, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = valueText,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
         }
+        Spacer(modifier = Modifier.height(4.dp))
         Slider(
             value = value.coerceIn(range),
             onValueChange = {
@@ -653,7 +777,12 @@ private fun BalanceColumn(
     onAdjust: (Int) -> Unit,
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = title, style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Spacer(modifier = Modifier.height(4.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(
                 onClick = { onAdjust(-1) },
@@ -696,12 +825,12 @@ private fun entriesFor(key: String): List<String> {
 object SearchKeyMapper {
     fun sectionFor(key: String?): String? = when (key) {
         Constants.DAC_SWITCH_KEY -> "dac_switch"
-        Constants.HIFI_MODE_KEY -> Constants.HIFI_MODE_KEY
-        Constants.AVC_VOLUME_KEY -> Constants.AVC_VOLUME_KEY
-        Constants.SOUND_PRESET_KEY -> Constants.SOUND_PRESET_KEY
-        Constants.DIGITAL_FILTER_KEY -> Constants.DIGITAL_FILTER_KEY
-        Constants.CUSTOM_FILTER_SHAPE_KEY -> Constants.CUSTOM_FILTER_SHAPE_KEY
-        Constants.CUSTOM_FILTER_SYMMETRY_KEY -> Constants.CUSTOM_FILTER_SYMMETRY_KEY
+        Constants.HIFI_MODE_KEY,
+        Constants.AVC_VOLUME_KEY,
+        Constants.SOUND_PRESET_KEY,
+        Constants.DIGITAL_FILTER_KEY -> "audio_settings_card"
+        Constants.CUSTOM_FILTER_SHAPE_KEY,
+        Constants.CUSTOM_FILTER_SYMMETRY_KEY -> "custom_filter_card"
         Constants.RESET_COEFFICIENTS_KEY -> Constants.RESET_COEFFICIENTS_KEY
         Constants.BALANCE_KEY -> Constants.BALANCE_KEY
         else -> null
