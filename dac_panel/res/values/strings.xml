@@ -65,5 +65,8 @@
     <string name="cf_coeff_label" translatable="false">Coefficient %1$d : %2$s</string>
     <string name="balance_value_db" translatable="false">%1$.1f db</string>
 
+    <string name="back">Back</string>
+    <string name="headset_not_plugged_hint">Connect wired headphones to use Hi-Fi Quad DAC</string>
+
 </resources>
 

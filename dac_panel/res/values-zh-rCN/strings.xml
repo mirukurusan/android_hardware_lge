@@ -40,4 +40,6 @@
     <string name="hifi_mode_aux-him">AUX 高阻抗</string>
     <string name="avc_volume">AVC 音量</string>
     <string name="avc_volume_summary">放大音量</string>
+    <string name="back">返回</string>
+    <string name="headset_not_plugged_hint">连接有线耳机以使用 Hi-Fi Quad DAC</string>
 </resources>
