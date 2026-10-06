@@ -13,7 +13,6 @@ allow hal_camera_default input_device:chr_file rw_file_perms;
 allow hal_camera_default proc:file { getattr open read };
 rw_dir_file(hal_camera_default, sysfs_camera_sensors)
 
-get_prop(hal_camera_default, vendor_camera_prop)
 get_prop(hal_camera_default, vendor_lge_misc_prop)
 
 # Debug use

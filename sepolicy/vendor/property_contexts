@@ -7,8 +7,9 @@ persist.vendor.lge.audio.                        u:object_r:vendor_audio_prop:s0
 ro.vendor.lge.config.hifi_enhance_support        u:object_r:vendor_audio_prop:s0
 ro.vendor.lge.feature.use_audio_headset_type_ext u:object_r:vendor_audio_prop:s0
 vendor.lge.audio.hifi_rec.                       u:object_r:vendor_audio_prop:s0
-vendor.lge.fm_gain_control_headset               u:object_r:vendor_audio_prop:s0
-vendor.lge.fm_gain_control_speaker               u:object_r:vendor_audio_prop:s0
+vendor.lge.fm_gain_control_headset               u:object_r:vendor_lge_misc_prop:s0
+vendor.lge.fm_gain_control_speaker               u:object_r:vendor_lge_misc_prop:s0
+vendor.lge.fm_gain_control_factor                u:object_r:vendor_lge_misc_prop:s0
 
 # FM
 vendor.hw.fm.version u:object_r:vendor_fm_prop:s0
@@ -16,6 +17,7 @@ vendor.hw.fm.version u:object_r:vendor_fm_prop:s0
 # LGE Misc
 ro.vendor.lge.build.target_country  u:object_r:vendor_lge_misc_prop:s0
 ro.vendor.lge.build.target_operator u:object_r:vendor_lge_misc_prop:s0
+ro.vendor.lge.build.target_region   u:object_r:vendor_lge_misc_prop:s0
 ro.vendor.lge.capp_cupss.           u:object_r:vendor_lge_misc_prop:s0
 ro.vendor.lge.swversion             u:object_r:vendor_lge_misc_prop:s0
 
@@ -49,8 +51,8 @@ persist.vendor.sensors.enable.mag_filter u:object_r:vendor_sensors_prop:s0
 persist.vendor.lge.sys.thermald_miti_off u:object_r:thermal-engine_prop:s0
 
 # USB
-ro.vendor.lge.usb.diag_count u:object_r:vendor_lge_usb_prop:s0
-vendor.lge.usb.state         u:object_r:vendor_lge_usb_prop:s0
+ro.vendor.lge.usb.           u:object_r:vendor_lge_usb_prop:s0
+vendor.lge.usb.              u:object_r:vendor_lge_usb_prop:s0
 
 # Vibrator
 ro.vendor.vibrator.hal.click.duration      u:object_r:vendor_vibrator_prop:s0
