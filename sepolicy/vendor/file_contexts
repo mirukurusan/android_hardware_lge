@@ -69,8 +69,6 @@
 /sys/devices/platform/soc/[0-9a-f]+\.i2c/i2c-[0-9]/[0-9]-0048(/.*)? u:object_r:sysfs_dac:s0
 /sys/kernel/es9218_dac(/.*)?                                        u:object_r:sysfs_dac:s0
 
-# Sysfs - SD Card
-/sys/devices/platform/soc/8804000.sdhci/mmc_host/mmc0/mmc0:59b4/block/mmcblk0/mmcblk0p[0-9]+(/.*)? u:object_r:vendor_sysfs_mmc_host:s0
 
 # Sysfs - USB
 /sys/devices/platform/vendor/vendor:lge_usb_ds3/extcon/extcon5/cable.0(/.*)? u:object_r:sysfs_lge_usb:s0

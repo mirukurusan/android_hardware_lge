@@ -16,3 +16,7 @@
 
 # Persist files
 /mnt/vendor/persist(/.*)?                               u:object_r:vendor_persist_file:s0
+
+# Sysfs - SD Card
+/sys/devices/platform/soc/8804000.sdhci/mmc_host/mmc0/mmc0:59b4/block/mmcblk0/mmcblk0p[0-9]+(/.*)? u:object_r:vendor_sysfs_mmc_host:s0
+
