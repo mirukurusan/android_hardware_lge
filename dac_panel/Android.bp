@@ -30,6 +30,10 @@ android_app {
     platform_apis: true,
     system_ext_specific: true,
 
+    required: [
+        "libaudiopolicymanagercustom",
+    ],
+
     static_libs: [
         "vendor.lge.hardware.audio.dac.control-V2.0-java",
         "androidx.core_core",
