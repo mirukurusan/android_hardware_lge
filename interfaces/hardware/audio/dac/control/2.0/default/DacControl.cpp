@@ -55,7 +55,16 @@ static constexpr int32_t MIN_BALANCE_VALUE = -12;
 static std::vector<KeyValue> sound_presets = {
         {"Normal", "0"}, {"Enhanced", "1"}, {"Detailed", "2"}, {"Live", "3"}, {"Bass", "4"}};
 
-static std::vector<KeyValue> digital_filters = {{"Short", "0"}, {"Sharp", "1"}, {"Slow", "2"}};
+static std::vector<KeyValue> digital_filters = {
+        {"Short", "0"},
+        {"Sharp", "1"},
+        {"Slow", "2"},
+        {"Minimum phase fast", "3"},
+        {"Minimum phase slow", "4"},
+        {"Apodizing fast 1", "5"},
+        {"Hybrid fast", "6"},
+        {"Brick wall", "7"},
+        {"Customizable Filter", "8"}};
 
 static std::vector<KeyValue> hifi_modes = {
         {"Normal", "0"}, {"High Impedance", "1"}, {"AUX High Impedance", "2"}};
@@ -335,16 +344,31 @@ bool DacControl::setDigitalFilterState(int32_t value) {
     int filter;
 
     switch (value) {
-        case 0:  // Short
+        case 0:  // Short (Apodizing fast roll-off 2)
             filter = 9;
             break;
-        case 1:  // Sharp
+        case 1:  // Sharp (Linear phase fast roll-off)
             filter = 4;
             break;
-        case 2:  // Slow
+        case 2:  // Slow (Linear phase slow roll-off)
             filter = 5;
             break;
-        case 3:  // Custom
+        case 3:  // Minimum phase fast roll-off
+            filter = 6;
+            break;
+        case 4:  // Minimum phase slow roll-off
+            filter = 7;
+            break;
+        case 5:  // Apodizing fast roll-off 1
+            filter = 8;
+            break;
+        case 6:  // Hybrid fast roll-off
+            filter = 10;
+            break;
+        case 7:  // Brick wall
+            filter = 11;
+            break;
+        case 8:  // Customizable Filter
             filter = 3;
             break;
         default:
