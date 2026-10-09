@@ -33,7 +33,7 @@
     <string name="cf_symmetry_0">正弦對稱</string>
     <string name="cf_symmetry_1">餘弦對稱</string>
     <string name="customizable_filter_coeffs">可自訂篩選係數</string>
-    <string name="customizable_filter_coeffs_summary">注意：如果所有係數皆為 0，音訊將被靜音</string>
+    <string name="customizable_filter_coeffs_summary">提示：自訂濾波器的對稱模式與係數為底層硬體 FIR 參數，不可隨意調整。參數須透過專業 DSP 工具（如 MATLAB / SciPy）聯合計算生成；不當設定會導致嚴重頻率響應失真、音量劇變或靜音。常規聆聽請使用內建預設。</string>
     <string name="hifi_mode">HiFi 模式</string>
     <string name="hifi_mode_normal">標準</string>
     <string name="hifi_mode_him">高阻抗</string>

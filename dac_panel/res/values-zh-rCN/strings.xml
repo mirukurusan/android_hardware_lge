@@ -33,7 +33,7 @@
     <string name="cf_symmetry_0">正弦对称性</string>
     <string name="cf_symmetry_1">余弦对称性</string>
     <string name="customizable_filter_coeffs">可定制的过滤器系数</string>
-    <string name="customizable_filter_coeffs_summary">注意：如果所有系数均为 0，音频将被静音</string>
+    <string name="customizable_filter_coeffs_summary">提示：自定义滤波器的对称模式与系数为底层硬件 FIR 参数，不可随意调整。参数须通过专业 DSP 工具（如 MATLAB / SciPy）联合计算生成；不当配置会导致严重频响失真、音量剧变或静音。常规收听请使用内置预设。</string>
     <string name="hifi_mode">HiFi 模式</string>
     <string name="hifi_mode_normal">普通</string>
     <string name="hifi_mode_him">高阻抗</string>

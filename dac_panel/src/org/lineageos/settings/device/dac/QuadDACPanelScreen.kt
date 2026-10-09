@@ -296,6 +296,13 @@ private fun QuadDACPanelList(state: QuadDACUiState, viewModel: QuadDACViewModel,
             item(key = "section_custom_filter") {
                 SectionTitle(stringResource(R.string.customizable_filter_settings))
             }
+            item(key = "custom_filter_warning_banner") {
+                CustomFilterWarningBanner(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                )
+            }
             item(key = "custom_filter_card") {
                 SettingsCard {
                     SingleChoicePreferenceRow(
@@ -320,13 +327,6 @@ private fun QuadDACPanelList(state: QuadDACUiState, viewModel: QuadDACViewModel,
             }
             item(key = "coeff_section_title") {
                 SectionTitle(stringResource(R.string.customizable_filter_coeffs))
-            }
-            item(key = "coeff_warning_banner") {
-                CoefficientsWarningBanner(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                )
             }
             item(key = "coeffs_card") {
                 SettingsCard {
@@ -600,32 +600,34 @@ private fun SettingsCard(
 }
 
 @Composable
-private fun CoefficientsWarningBanner(modifier: Modifier = Modifier) {
+private fun CustomFilterWarningBanner(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f),
-            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f),
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
         ),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
         ) {
             Icon(
                 imageVector = Icons.Default.Info,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier
+                    .size(22.dp)
+                    .padding(top = 2.dp),
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = stringResource(R.string.customizable_filter_coeffs_summary),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onErrorContainer,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
             )
         }
     }

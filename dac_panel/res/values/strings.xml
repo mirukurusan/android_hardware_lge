@@ -49,7 +49,7 @@
     <string name="cf_symmetry_1">Cosine Symmetry</string>
 
     <string name="customizable_filter_coeffs">Customizable Filter Coefficients</string>
-    <string name="customizable_filter_coeffs_summary">NOTE: If all coefficients are 0, audio will be muted</string>
+    <string name="customizable_filter_coeffs_summary">Notice: Custom filter symmetry and coefficients are raw hardware FIR parameters and cannot be tuned arbitrarily. They must be mathematically designed using DSP tools (e.g. MATLAB, SciPy); improper values cause severe frequency distortion, sudden volume jumps, or muting. Use the built-in presets for normal playback.</string>
 
     <string name="hifi_mode">HiFi mode</string>
 
