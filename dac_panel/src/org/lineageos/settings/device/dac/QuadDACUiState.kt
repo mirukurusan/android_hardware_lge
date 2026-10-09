@@ -77,7 +77,7 @@ data class QuadDACUiState(
         get() = Feature.BalanceLeft in supportedFeatures &&
                 Feature.BalanceRight in supportedFeatures
 
-    /** Replacement for checkCustomFilterVisibility(): only with filter [3] selected. */
+    /** Replacement for checkCustomFilterVisibility(): only with filter [8] selected. */
     val customFilterVisible: Boolean
-        get() = customFilterSupported && digitalFilter == 3
+        get() = customFilterSupported && digitalFilter == 8
 }
