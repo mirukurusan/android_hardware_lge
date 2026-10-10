@@ -22,6 +22,7 @@
 
 #include <sys/stat.h>
 #include <unistd.h>
+#include <cmath>
 #include <fstream>
 
 std::vector<std::string> PROPERTY_CUSTOM_FILTER_COEFFS = {
@@ -380,14 +381,27 @@ bool DacControl::setDigitalFilterState(int32_t value) {
 }
 
 bool DacControl::setVolumeBalance(Feature direction, int32_t value) {
+    int32_t val = std::abs(value);
     switch (direction) {
         case Feature::BalanceLeft: {
-            bool ok = set(volumeLeftPath, value);
-            return property_set(PROPERTY_LEFT_BALANCE, std::to_string(value).c_str()) == 0 && ok;
+            bool ok = set(volumeLeftPath, val);
+#ifdef PROPRIETARY_AUDIO_MODULE
+            KeyValue kv;
+            kv.name = SET_HIFI_DAC_L_VOLUME_COMMAND;
+            kv.value = std::to_string(val);
+            setAudioHALParameters(kv);
+#endif
+            return property_set(PROPERTY_LEFT_BALANCE, std::to_string(val).c_str()) == 0 && ok;
         }
         case Feature::BalanceRight: {
-            bool ok = set(volumeRightPath, value);
-            return property_set(PROPERTY_RIGHT_BALANCE, std::to_string(value).c_str()) == 0 && ok;
+            bool ok = set(volumeRightPath, val);
+#ifdef PROPRIETARY_AUDIO_MODULE
+            KeyValue kv;
+            kv.name = SET_HIFI_DAC_R_VOLUME_COMMAND;
+            kv.value = std::to_string(val);
+            setAudioHALParameters(kv);
+#endif
+            return property_set(PROPERTY_RIGHT_BALANCE, std::to_string(val).c_str()) == 0 && ok;
         }
         default:
             return false;

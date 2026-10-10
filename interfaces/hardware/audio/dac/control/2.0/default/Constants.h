@@ -64,3 +64,5 @@ extern std::vector<std::string> PROPERTY_CUSTOM_FILTER_COEFFS;
 #define SET_DAC_OFF_COMMAND "off"
 
 #define SET_SOUND_PRESET_COMMAND "SOUND_PRESET"
+#define SET_HIFI_DAC_L_VOLUME_COMMAND "hifi_dac_l_volume"
+#define SET_HIFI_DAC_R_VOLUME_COMMAND "hifi_dac_r_volume"
