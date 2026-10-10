@@ -53,9 +53,11 @@ class QuadDACViewModel(application: Application) : AndroidViewModel(application)
     /** Serializes HAL writes so a burst of slider changes stays ordered. */
     private val halMutex = Mutex()
 
-    /** Debounce jobs for slider-style controls (AVC + coefficients). */
+    /** Debounce jobs for slider-style controls (AVC + coefficients + balance). */
     private var avcCommitJob: Job? = null
     private val coeffCommitJobs = arrayOfNulls<Job>(14)
+    private var leftBalanceJob: Job? = null
+    private var rightBalanceJob: Job? = null
 
     init {
         viewModelScope.launch { initialize() }
@@ -223,21 +225,25 @@ class QuadDACViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun onBalanceAdjusted(side: BalanceSide, delta: Int) {
-        viewModelScope.launch {
-            val current = _uiState.value
-            val currentValue =
-                if (side == BalanceSide.LEFT) current.balanceLeft else current.balanceRight
-            val newValue = (currentValue + delta).coerceIn(current.balanceRange)
-            if (newValue == currentValue) return@launch  // at the boundary: no-op
+    fun onBalanceChanged(side: BalanceSide, value: Int, commitNow: Boolean = false) {
+        val target = value.coerceIn(_uiState.value.balanceRange)
+        val currentValue =
+            if (side == BalanceSide.LEFT) _uiState.value.balanceLeft else _uiState.value.balanceRight
+        if (target == currentValue && !commitNow) return
 
-            _uiState.update {
-                if (side == BalanceSide.LEFT) it.copy(balanceLeft = newValue)
-                else it.copy(balanceRight = newValue)
-            }
+        _uiState.update {
+            if (side == BalanceSide.LEFT) it.copy(balanceLeft = target)
+            else it.copy(balanceRight = target)
+        }
+
+        val existingJob = if (side == BalanceSide.LEFT) leftBalanceJob else rightBalanceJob
+        existingJob?.cancel()
+
+        val job = viewModelScope.launch {
+            if (!commitNow) delay(SLIDER_DEBOUNCE_MS)
             val ok = writeHal {
-                if (side == BalanceSide.LEFT) QuadDAC.setLeftBalance(-newValue)
-                else QuadDAC.setRightBalance(-newValue)
+                if (side == BalanceSide.LEFT) QuadDAC.setLeftBalance(-target)
+                else QuadDAC.setRightBalance(-target)
             }
             if (!ok) {
                 val left = withContext(Dispatchers.IO) {
@@ -253,6 +259,30 @@ class QuadDACViewModel(application: Application) : AndroidViewModel(application)
                 ) }
             }
         }
+
+        if (side == BalanceSide.LEFT) {
+            leftBalanceJob = job
+        } else {
+            rightBalanceJob = job
+        }
+    }
+
+    fun onBalanceCommit(side: BalanceSide) {
+        val current = _uiState.value
+        val value = if (side == BalanceSide.LEFT) current.balanceLeft else current.balanceRight
+        onBalanceChanged(side, value, commitNow = true)
+    }
+
+    fun onBalanceAdjusted(side: BalanceSide, delta: Int) {
+        val current = _uiState.value
+        val currentValue =
+            if (side == BalanceSide.LEFT) current.balanceLeft else current.balanceRight
+        onBalanceChanged(side, currentValue + delta, commitNow = true)
+    }
+
+    fun onResetBalance() {
+        onBalanceChanged(BalanceSide.LEFT, 0, commitNow = true)
+        onBalanceChanged(BalanceSide.RIGHT, 0, commitNow = true)
     }
 
     fun onHeadsetStateChanged(plugged: Boolean) {
