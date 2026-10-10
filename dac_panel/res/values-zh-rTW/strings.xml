@@ -15,9 +15,9 @@
     <string name="sound_preset_live">Live</string>
     <string name="sound_preset_bass">Bass</string>
     <string name="digital_filter">數位濾波器</string>
-    <string name="digital_filter_0">短</string>
-    <string name="digital_filter_1">銳利</string>
-    <string name="digital_filter_2">慢</string>
+    <string name="digital_filter_0">線性相位快速衰減</string>
+    <string name="digital_filter_1">線性相位慢速衰減</string>
+    <string name="digital_filter_2">線性相位慢速衰減</string>
     <string name="digital_filter_3">可自訂篩選</string>
     <string name="customizable_filter_settings">可自訂篩選設定</string>
     <string name="cf_shape">自定義篩選形狀</string>

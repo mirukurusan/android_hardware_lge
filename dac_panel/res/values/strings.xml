@@ -25,9 +25,9 @@
 
     <string name="digital_filter">Digital filter</string>
 
-    <string name="digital_filter_0">Short</string>
-    <string name="digital_filter_1">Sharp</string>
-    <string name="digital_filter_2">Slow</string>
+    <string name="digital_filter_0">Linear phase fast roll-off</string>
+    <string name="digital_filter_1">Linear phase slow roll-off</string>
+    <string name="digital_filter_2">Linear phase slow roll-off</string>
     <string name="digital_filter_3">Customizable Filter</string>
 
     <string name="customizable_filter_settings">Customizable Filter Settings</string>
