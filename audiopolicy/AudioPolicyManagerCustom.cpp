@@ -22,6 +22,7 @@
 #include <EngineLibrary.h>
 #include <cutils/properties.h>
 #include <log/log.h>
+#include <system/audio.h>
 
 namespace android {
 
@@ -59,11 +60,14 @@ status_t AudioPolicyManagerCustom::getOutputForAttr(
         isQuadDacEnabled = property_get_bool("persist.vendor.audio.hifi.enabled", false);
     }
 
-    if (isWiredHeadphone && isQuadDacEnabled && streamType == AUDIO_STREAM_MUSIC &&
-        audio_is_linear_pcm(config->format)) {
+    bool is48k16b = (config->sample_rate == 48000) &&
+                    (config->format == AUDIO_FORMAT_PCM_16_BIT || audio_bytes_per_sample(config->format) == 2);
+    bool shouldDirect = audio_is_linear_pcm(config->format) && !is48k16b;
+
+    if (isWiredHeadphone && isQuadDacEnabled && streamType == AUDIO_STREAM_MUSIC && shouldDirect) {
         *flags = (audio_output_flags_t)((*flags & ~AUDIO_OUTPUT_FLAG_DEEP_BUFFER) |
                                         AUDIO_OUTPUT_FLAG_DIRECT);
-        ALOGI("%s: Quad DAC Active! Force routing to DIRECT (rate=%u, format=0x%x, flags=0x%x)",
+        ALOGI("%s: Quad DAC Active! Force routing stream to DIRECT (rate=%u, format=0x%x, flags=0x%x)",
               __func__, config->sample_rate, config->format, *flags);
     }
 
