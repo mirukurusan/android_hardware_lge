@@ -118,6 +118,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.hypot
+import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import org.lineageos.settings.device.dac.utils.Constants
@@ -470,7 +472,7 @@ private fun QuadDACPanelList(state: QuadDACUiState, viewModel: QuadDACViewModel,
             }
         }
         item(key = "bottom_spacer") {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(48.dp))
         }
     }
 }
@@ -981,12 +983,29 @@ private fun RotaryKnob(
             .pointerInput(enabled, range) {
                 if (!enabled) return@pointerInput
                 val center = Offset(size.width / 2f, size.height / 2f)
+                val maxRadius = min(size.width, size.height) / 2f
+                val trackRadius = maxRadius - 10.dp.toPx()
+                val trackStroke = 6.dp.toPx()
+                val knobRadius = trackRadius - trackStroke / 2f - 6.dp.toPx()
+
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
+                    val downDx = down.position.x - center.x
+                    val downDy = down.position.y - center.y
+                    val downDist = hypot(downDx, downDy)
+
+                    if (downDist > maxRadius) {
+                        return@awaitEachGesture
+                    }
                     down.consume()
+
+                    var downAngle = atan2(downDy.toDouble(), downDx.toDouble()) * (180.0 / PI)
+                    if (downAngle < 0.0) downAngle += 360.0
+                    val isDownInBottomGap = downAngle > 50.0 && downAngle < 130.0 && downDist > knobRadius
+
                     val startTime = System.currentTimeMillis()
 
-                    if (startTime - lastTapTime < 300L) {
+                    if (startTime - lastTapTime < 300L && !isDownInBottomGap) {
                         currentOnValueChange(0, true)
                         lastTapTime = 0L
                         while (true) {
@@ -998,40 +1017,49 @@ private fun RotaryKnob(
                         return@awaitEachGesture
                     }
 
+                    val initialValue = currentValue
                     var isDrag = false
                     var lastReportedVal = currentValue
+                    var isCancelled = false
 
                     while (true) {
                         val event = awaitPointerEvent()
                         val change = event.changes.firstOrNull { it.id == down.id } ?: break
 
-                        change.consume()
-
-                        if (!change.pressed) {
-                            if (!isDrag) {
-                                val tappedVal = angleToValue(
-                                    touchX = change.position.x,
-                                    touchY = change.position.y,
-                                    centerX = center.x,
-                                    centerY = center.y,
-                                    currentValue = lastReportedVal,
-                                    range = range,
-                                )
-                                currentOnValueChange(tappedVal, true)
-                                lastTapTime = startTime
-                            } else {
-                                currentOnCommit()
-                            }
+                        if (change.isConsumed) {
+                            isCancelled = true
                             break
                         }
 
-                        val dx = change.position.x - down.position.x
-                        val dy = change.position.y - down.position.y
-                        if (!isDrag && (dx * dx + dy * dy) > 25f) {
+                        if (!change.pressed) {
+                            if (!isDrag) {
+                                if (!isDownInBottomGap) {
+                                    val tappedVal = angleToValue(
+                                        touchX = change.position.x,
+                                        touchY = change.position.y,
+                                        centerX = center.x,
+                                        centerY = center.y,
+                                        currentValue = lastReportedVal,
+                                        range = range,
+                                    )
+                                    currentOnValueChange(tappedVal, true)
+                                    lastTapTime = startTime
+                                }
+                            } else {
+                                currentOnCommit()
+                            }
+                            change.consume()
+                            break
+                        }
+
+                        val moveDx = change.position.x - down.position.x
+                        val moveDy = change.position.y - down.position.y
+                        if (!isDrag && (moveDx * moveDx + moveDy * moveDy) > 36f) {
                             isDrag = true
                         }
 
                         if (isDrag) {
+                            change.consume()
                             val newVal = angleToValue(
                                 touchX = change.position.x,
                                 touchY = change.position.y,
@@ -1045,6 +1073,10 @@ private fun RotaryKnob(
                                 currentOnValueChange(newVal, false)
                             }
                         }
+                    }
+
+                    if (isCancelled && lastReportedVal != initialValue) {
+                        currentOnValueChange(initialValue, false)
                     }
                 }
             }
