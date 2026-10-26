@@ -29,6 +29,7 @@
 /(vendor|system/vendor)/bin/hw/vendor\.lge\.hardware\.powerhint\.rescontrol@2\.0-service     u:object_r:hal_powerhint_default_exec:s0
 /(vendor|system/vendor)/bin/hw/vendor\.lge\.hardware\.sensors\.devicecontext@1\.0-service    u:object_r:hal_sensors_default_exec:s0
 /(vendor|system/vendor)/bin/hw/vendor\.lge\.hardware\.vss_ims@1\.0-service                   u:object_r:hal_vssims_default_exec:s0
+/(vendor|system/vendor)/bin/hw/vendor\.lge\.hardware\.soi@1\.0-service                       u:object_r:hal_soi_default_exec:s0
 /(vendor|system/vendor)/bin/hw/vendor\.lineage\.livedisplay-service\.lge		             u:object_r:hal_lineage_livedisplay_qti_exec:s0
 /(vendor|system/vendor)/bin/hw/vendor\.lineage\.touch-service\.lge                           u:object_r:hal_lineage_touch_default_exec:s0
 /(vendor|system/vendor)/bin/qni                                                              u:object_r:qni_exec:s0

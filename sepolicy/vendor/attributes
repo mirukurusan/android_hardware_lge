@@ -13,3 +13,7 @@ attribute hal_vssims_server;
 attribute hal_lgdata;
 attribute hal_lgdata_client;
 attribute hal_lgdata_server;
+
+attribute hal_soi;
+attribute hal_soi_client;
+attribute hal_soi_server;

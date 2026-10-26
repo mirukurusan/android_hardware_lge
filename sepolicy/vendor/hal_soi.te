@@ -1,0 +1,5 @@
+binder_call(hal_soi_client, hal_soi_server)
+binder_call(hal_soi_server, hal_soi_client)
+
+add_hwservice(hal_soi_server, hal_lge_soi_hwservice)
+allow hal_soi_client hal_lge_soi_hwservice:hwservice_manager find;

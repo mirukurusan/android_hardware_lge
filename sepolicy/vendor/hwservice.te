@@ -1,4 +1,5 @@
 type hal_lgdata_hwservice, hwservice_manager_type;
 type hal_lge_powerhint_hwservice, hwservice_manager_type;
 type hal_lge_vssims_hwservice, hwservice_manager_type;
+type hal_lge_soi_hwservice, hwservice_manager_type;
 type hal_motor_hwservice, hwservice_manager_type;
