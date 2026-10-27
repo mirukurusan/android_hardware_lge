@@ -9,8 +9,11 @@
 #include <android/hardware/radio/1.5/IRadioResponse.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
+#include <mutex>
 
 namespace android::hardware::radio::implementation {
+
+struct RadioIndication;
 
 using ::android::sp;
 using ::android::hardware::hidl_array;
@@ -22,8 +25,22 @@ using ::android::hardware::Void;
 
 struct RadioResponse : public V1_5::IRadioResponse {
     sp<V1_5::IRadioResponse> mRealRadioResponse;
+    sp<RadioIndication> mRadioIndication;
     V1_0::RadioTechnology mRat = V1_0::RadioTechnology::UNKNOWN;
     bool mDataRoaming = false;
+
+    void beginEmulatedNetworkScan(int32_t serial, int halVersion);
+    void stopEmulatedNetworkScan(int32_t serial);
+    void handleEmulatedNetworkScanResult(const V1_0::RadioResponseInfo& info,
+                                         const hidl_vec<V1_0::OperatorInfo>& networkInfos);
+
+  private:
+    std::mutex mScanMutex;
+    bool mIsScanEmulated = false;
+    int32_t mEmulatedScanSerial = -1;
+    int mEmulatedScanHalVersion = 5;
+
+  public:
     // Methods from ::android::hardware::radio::V1_0::IRadioResponse follow.
     Return<void> getIccCardStatusResponse(const V1_0::RadioResponseInfo& info,
                                           const V1_0::CardStatus& cardStatus) override;

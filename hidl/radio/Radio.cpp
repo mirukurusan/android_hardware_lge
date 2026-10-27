@@ -73,6 +73,7 @@ Return<void> Radio::setResponseFunctions(const sp<V1_0::IRadioResponse>& radioRe
                                          const sp<V1_0::IRadioIndication>& radioIndication) {
     mRadioResponse->mRealRadioResponse = V1_5::IRadioResponse::castFrom(radioResponse);
     mRadioIndication->mRealRadioIndication = V1_5::IRadioIndication::castFrom(radioIndication);
+    mRadioResponse->mRadioIndication = mRadioIndication;
 
     // We also need to do some funny for LgeRadio here.
     mLgeRadioResponse = new LgeRadioResponseV2(
@@ -651,17 +652,59 @@ Return<void> Radio::setSimCardPower_1_1(int32_t serial, V1_1::CardPowerState pow
     return Void();
 }
 
-Return<void> Radio::startNetworkScan(int32_t serial, const V1_1::NetworkScanRequest& request) {
-    MAYBE_WRAP_V1_1_CALL(startNetworkScan, serial, request);
+Return<void> Radio::startNetworkScanInternal(int32_t serial, int halVersion) {
+    if (mRealRadio == nullptr) {
+        V1_0::RadioResponseInfo respInfo = {
+            .type = V1_0::RadioResponseType::SOLICITED,
+            .serial = serial,
+            .error = V1_0::RadioError::RADIO_NOT_AVAILABLE
+        };
+        if (mRadioResponse != nullptr && mRadioResponse->mRealRadioResponse != nullptr) {
+            if (halVersion >= 5) {
+                mRadioResponse->mRealRadioResponse->startNetworkScanResponse_1_5(respInfo);
+            } else if (halVersion == 4) {
+                mRadioResponse->mRealRadioResponse->startNetworkScanResponse_1_4(respInfo);
+            } else {
+                mRadioResponse->mRealRadioResponse->startNetworkScanResponse(respInfo);
+            }
+        }
+        return Void();
+    }
 
-    // TODO implement
-    return Void();
+    if (mRadioResponse != nullptr) {
+        mRadioResponse->beginEmulatedNetworkScan(serial, halVersion);
+    }
+
+    V1_0::RadioResponseInfo respInfo = {
+        .type = V1_0::RadioResponseType::SOLICITED,
+        .serial = serial,
+        .error = V1_0::RadioError::NONE
+    };
+    if (mRadioResponse != nullptr && mRadioResponse->mRealRadioResponse != nullptr) {
+        if (halVersion >= 5) {
+            mRadioResponse->mRealRadioResponse->startNetworkScanResponse_1_5(respInfo);
+        } else if (halVersion == 4) {
+            mRadioResponse->mRealRadioResponse->startNetworkScanResponse_1_4(respInfo);
+        } else {
+            mRadioResponse->mRealRadioResponse->startNetworkScanResponse(respInfo);
+        }
+    }
+
+    return mRealRadio->getAvailableNetworks(serial);
+}
+
+Return<void> Radio::startNetworkScan(int32_t serial, const V1_1::NetworkScanRequest& request) {
+    return startNetworkScanInternal(serial, 1);
 }
 
 Return<void> Radio::stopNetworkScan(int32_t serial) {
-    MAYBE_WRAP_V1_1_CALL(stopNetworkScan, serial);
-
-    // TODO implement
+    if (mRadioResponse != nullptr) {
+        mRadioResponse->stopEmulatedNetworkScan(serial);
+    }
+    auto realRadio_V1_1 = getRealRadio_V1_1();
+    if (realRadio_V1_1 != nullptr) {
+        realRadio_V1_1->stopNetworkScan(serial);
+    }
     return Void();
 }
 
@@ -681,10 +724,7 @@ Return<void> Radio::stopKeepalive(int32_t serial, int32_t sessionHandle) {
 
 // Methods from ::android::hardware::radio::V1_2::IRadio follow.
 Return<void> Radio::startNetworkScan_1_2(int32_t serial, const V1_2::NetworkScanRequest& request) {
-    MAYBE_WRAP_V1_2_CALL(startNetworkScan_1_2, serial, request);
-
-    // TODO implement
-    return Void();
+    return startNetworkScanInternal(serial, 2);
 }
 
 Return<void> Radio::setIndicationFilter_1_2(
@@ -847,17 +887,7 @@ Return<void> Radio::emergencyDial(int32_t serial, const V1_0::Dial& dialInfo,
 }
 
 Return<void> Radio::startNetworkScan_1_4(int32_t serial, const V1_2::NetworkScanRequest& request) {
-    MAYBE_WRAP_V1_4_CALL(startNetworkScan_1_4, serial, request);
-    MAYBE_WRAP_V1_2_CALL(startNetworkScan_1_2, serial, request);
-
-    V1_1::NetworkScanRequest legacyRequest = {};
-    legacyRequest.type = request.type;
-    legacyRequest.interval = request.interval;
-    legacyRequest.specifiers = request.specifiers;
-
-    MAYBE_WRAP_V1_1_CALL(startNetworkScan, serial, legacyRequest);
-    // TODO implement
-    return Void();
+    return startNetworkScanInternal(serial, 4);
 }
 
 Return<void> Radio::getPreferredNetworkTypeBitmap(int32_t serial) {
@@ -1028,9 +1058,7 @@ Return<void> Radio::setSystemSelectionChannels_1_5(
 }
 
 Return<void> Radio::startNetworkScan_1_5(int32_t serial, const V1_5::NetworkScanRequest& request) {
-    MAYBE_WRAP_V1_5_CALL(startNetworkScan_1_5, serial, request);
-    return mRadioResponse->mRealRadioResponse->startNetworkScanResponse_1_5(
-            UnsupportedResponse(serial));
+    return startNetworkScanInternal(serial, 5);
 }
 
 Return<void> Radio::setupDataCall_1_5(int32_t serial, V1_5::AccessNetwork accessNetwork,

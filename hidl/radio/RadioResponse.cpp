@@ -5,8 +5,11 @@
  */
 
 #include "RadioResponse.h"
+#include <climits>
 #include <string>
+#include <vector>
 #include "Helpers.h"
+#include "RadioIndication.h"
 
 namespace android::hardware::radio::implementation {
 
@@ -280,6 +283,15 @@ Return<void> RadioResponse::setNetworkSelectionModeManualResponse(
 
 Return<void> RadioResponse::getAvailableNetworksResponse(
         const V1_0::RadioResponseInfo& info, const hidl_vec<V1_0::OperatorInfo>& networkInfos) {
+    {
+        std::lock_guard<std::mutex> lock(mScanMutex);
+        if (mIsScanEmulated && info.serial == mEmulatedScanSerial) {
+            mIsScanEmulated = false;
+            mEmulatedScanSerial = -1;
+            handleEmulatedNetworkScanResult(info, networkInfos);
+            return Void();
+        }
+    }
     return mRealRadioResponse->getAvailableNetworksResponse(info, networkInfos);
 }
 
@@ -1001,6 +1013,139 @@ Return<void> RadioResponse::supplySimDepersonalizationResponse(const V1_0::Radio
 Return<void> RadioResponse::getIccCardStatusResponse_1_5(const V1_0::RadioResponseInfo& info,
                                                          const V1_5::CardStatus& cardStatus) {
     return mRealRadioResponse->getIccCardStatusResponse_1_5(info, cardStatus);
+}
+
+void RadioResponse::beginEmulatedNetworkScan(int32_t serial, int halVersion) {
+    std::lock_guard<std::mutex> lock(mScanMutex);
+    mIsScanEmulated = true;
+    mEmulatedScanSerial = serial;
+    mEmulatedScanHalVersion = halVersion;
+}
+
+void RadioResponse::stopEmulatedNetworkScan(int32_t serial) {
+    std::lock_guard<std::mutex> lock(mScanMutex);
+    mIsScanEmulated = false;
+    mEmulatedScanSerial = -1;
+    if (mRealRadioResponse != nullptr) {
+        V1_0::RadioResponseInfo respInfo = {
+            .type = V1_0::RadioResponseType::SOLICITED,
+            .serial = serial,
+            .error = V1_0::RadioError::NONE
+        };
+        mRealRadioResponse->stopNetworkScanResponse(respInfo);
+    }
+}
+
+void RadioResponse::handleEmulatedNetworkScanResult(
+        const V1_0::RadioResponseInfo& info, const hidl_vec<V1_0::OperatorInfo>& networkInfos) {
+    if (mRadioIndication == nullptr || mRadioIndication->mRealRadioIndication == nullptr) {
+        return;
+    }
+
+    if (info.error != V1_0::RadioError::NONE) {
+        if (mEmulatedScanHalVersion >= 5) {
+            V1_5::NetworkScanResult scanResult = {
+                .status = V1_1::ScanStatus::COMPLETE,
+                .error = info.error,
+                .networkInfos = {}
+            };
+            mRadioIndication->mRealRadioIndication->networkScanResult_1_5(
+                    V1_0::RadioIndicationType::UNSOLICITED, scanResult);
+        } else {
+            V1_4::NetworkScanResult scanResult = {
+                .status = V1_1::ScanStatus::COMPLETE,
+                .error = info.error,
+                .networkInfos = {}
+            };
+            mRadioIndication->mRealRadioIndication->networkScanResult_1_4(
+                    V1_0::RadioIndicationType::UNSOLICITED, scanResult);
+        }
+        return;
+    }
+
+    if (mEmulatedScanHalVersion >= 5) {
+        std::vector<V1_5::CellInfo> cells;
+        for (const auto& op : networkInfos) {
+            V1_5::CellInfo cell = {};
+            cell.registered = (op.status == V1_0::OperatorStatus::CURRENT);
+            cell.timeStampType = V1_0::TimeStampType::UNKNOWN;
+            cell.timeStamp = 0;
+            cell.connectionStatus = cell.registered ? V1_2::CellConnectionStatus::PRIMARY_SERVING
+                                                   : V1_2::CellConnectionStatus::NONE;
+
+            std::string numeric(op.operatorNumeric.c_str());
+            std::string mcc = numeric.size() >= 3 ? numeric.substr(0, 3) : "";
+            std::string mnc = numeric.size() >= 5 ? numeric.substr(3) : "";
+
+            V1_5::CellInfoLte lte = {};
+            lte.cellIdentityLte.base.base.mcc = mcc;
+            lte.cellIdentityLte.base.base.mnc = mnc;
+            lte.cellIdentityLte.base.base.ci = INT_MAX;
+            lte.cellIdentityLte.base.base.pci = 0;
+            lte.cellIdentityLte.base.base.tac = INT_MAX;
+            lte.cellIdentityLte.base.base.earfcn = 0;
+            lte.cellIdentityLte.base.operatorNames.alphaLong = op.alphaLong;
+            lte.cellIdentityLte.base.operatorNames.alphaShort = op.alphaShort;
+            lte.cellIdentityLte.base.bandwidth = INT_MAX;
+            lte.signalStrengthLte.signalStrength = 99;
+            lte.signalStrengthLte.rsrp = INT_MAX;
+            lte.signalStrengthLte.rsrq = INT_MAX;
+            lte.signalStrengthLte.rssnr = INT_MAX;
+            lte.signalStrengthLte.cqi = INT_MAX;
+            lte.signalStrengthLte.timingAdvance = INT_MAX;
+
+            cell.ratSpecificInfo.lte(lte);
+            cells.push_back(cell);
+        }
+
+        V1_5::NetworkScanResult scanResult = {
+            .status = V1_1::ScanStatus::COMPLETE,
+            .error = V1_0::RadioError::NONE,
+            .networkInfos = cells
+        };
+        mRadioIndication->mRealRadioIndication->networkScanResult_1_5(
+                V1_0::RadioIndicationType::UNSOLICITED, scanResult);
+    } else {
+        std::vector<V1_4::CellInfo> cells;
+        for (const auto& op : networkInfos) {
+            V1_4::CellInfo cell = {};
+            cell.isRegistered = (op.status == V1_0::OperatorStatus::CURRENT);
+            cell.connectionStatus = cell.isRegistered ? V1_2::CellConnectionStatus::PRIMARY_SERVING
+                                                      : V1_2::CellConnectionStatus::NONE;
+
+            std::string numeric(op.operatorNumeric.c_str());
+            std::string mcc = numeric.size() >= 3 ? numeric.substr(0, 3) : "";
+            std::string mnc = numeric.size() >= 5 ? numeric.substr(3) : "";
+
+            V1_4::CellInfoLte lte = {};
+            lte.base.cellIdentityLte.base.mcc = mcc;
+            lte.base.cellIdentityLte.base.mnc = mnc;
+            lte.base.cellIdentityLte.base.ci = INT_MAX;
+            lte.base.cellIdentityLte.base.pci = 0;
+            lte.base.cellIdentityLte.base.tac = INT_MAX;
+            lte.base.cellIdentityLte.base.earfcn = 0;
+            lte.base.cellIdentityLte.operatorNames.alphaLong = op.alphaLong;
+            lte.base.cellIdentityLte.operatorNames.alphaShort = op.alphaShort;
+            lte.base.cellIdentityLte.bandwidth = INT_MAX;
+            lte.base.signalStrengthLte.signalStrength = 99;
+            lte.base.signalStrengthLte.rsrp = INT_MAX;
+            lte.base.signalStrengthLte.rsrq = INT_MAX;
+            lte.base.signalStrengthLte.rssnr = INT_MAX;
+            lte.base.signalStrengthLte.cqi = INT_MAX;
+            lte.base.signalStrengthLte.timingAdvance = INT_MAX;
+
+            cell.info.lte(lte);
+            cells.push_back(cell);
+        }
+
+        V1_4::NetworkScanResult scanResult = {
+            .status = V1_1::ScanStatus::COMPLETE,
+            .error = V1_0::RadioError::NONE,
+            .networkInfos = cells
+        };
+        mRadioIndication->mRealRadioIndication->networkScanResult_1_4(
+                V1_0::RadioIndicationType::UNSOLICITED, scanResult);
+    }
 }
 
 }  // namespace android::hardware::radio::implementation
