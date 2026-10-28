@@ -217,7 +217,9 @@ Return<void> LgeRadioIndicationV2::lgeCurrentSignalStrength(
                                         .wcdma = signalStrength.wcdma,
                                         .nr = signalStrength.nr};
 
-    mRadioIndication->currentSignalStrength_1_4(type, newSignalStrength);
+    if (mRadioIndication != nullptr) {
+        mRadioIndication->currentSignalStrength_1_4(type, newSignalStrength);
+    }
     return Void();
 }
 

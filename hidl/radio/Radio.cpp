@@ -66,6 +66,7 @@ namespace android::hardware::radio::implementation {
 
 Radio::Radio(sp<V1_0::IRadio> realRadio, int slotId) : mRealRadio(realRadio) {
     mSlotId = slotId;
+    mLgeRadio = ILgeRadio::getService("lge_radio" + (mSlotId != 1 ? std::to_string(mSlotId) : ""));
 }
 
 // Methods from ::android::hardware::radio::V1_0::IRadio follow.
@@ -75,13 +76,16 @@ Return<void> Radio::setResponseFunctions(const sp<V1_0::IRadioResponse>& radioRe
     mRadioIndication->mRealRadioIndication = V1_5::IRadioIndication::castFrom(radioIndication);
     mRadioResponse->mRadioIndication = mRadioIndication;
 
-    // We also need to do some funny for LgeRadio here.
     mLgeRadioResponse = new LgeRadioResponseV2(
             V1_4::IRadioResponse::castFrom(radioResponse).withDefault(nullptr));
     mLgeRadioIndication = new LgeRadioIndicationV2(
             V1_4::IRadioIndication::castFrom(radioIndication).withDefault(nullptr));
-    auto svc = ILgeRadio::getService("lge_radio" + (mSlotId != 1 ? std::to_string(mSlotId) : ""));
-    svc->setResponseFunctions(mLgeRadioResponse, mLgeRadioIndication);
+    if (mLgeRadio == nullptr) {
+        mLgeRadio = ILgeRadio::getService("lge_radio" + (mSlotId != 1 ? std::to_string(mSlotId) : ""));
+    }
+    if (mLgeRadio != nullptr) {
+        mLgeRadio->setResponseFunctions(mLgeRadioResponse, mLgeRadioIndication);
+    }
 
     // Finally, set up radio
     WRAP_V1_0_CALL(setResponseFunctions, mRadioResponse, mRadioIndication);
@@ -166,6 +170,9 @@ Return<void> Radio::getLastCallFailCause(int32_t serial) {
 }
 
 Return<void> Radio::getSignalStrength(int32_t serial) {
+    if (mLgeRadio != nullptr) {
+        return mLgeRadio->lgeGetSignalStrength(serial);
+    }
     WRAP_V1_0_CALL(getSignalStrength, serial);
 }
 
@@ -1008,6 +1015,9 @@ Return<void> Radio::getAllowedCarriers_1_4(int32_t serial) {
 }
 
 Return<void> Radio::getSignalStrength_1_4(int32_t serial) {
+    if (mLgeRadio != nullptr) {
+        return mLgeRadio->lgeGetSignalStrength(serial);
+    }
     MAYBE_WRAP_V1_4_CALL(getSignalStrength_1_4, serial);
     WRAP_V1_0_CALL(getSignalStrength, serial);
 }

@@ -315,6 +315,7 @@ struct Radio : public V1_5::IRadio {
     sp<RadioIndication> mRadioIndication = new RadioIndication();
     sp<LgeRadioResponseV2> mLgeRadioResponse;
     sp<LgeRadioIndicationV2> mLgeRadioIndication;
+    sp<ILgeRadio> mLgeRadio;
 
     Return<void> startNetworkScanInternal(int32_t serial, int halVersion);
 
